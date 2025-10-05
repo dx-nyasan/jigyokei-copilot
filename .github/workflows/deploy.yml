@@ -27,7 +27,7 @@ jobs:
 
     - name: Create project-level .clasp.json
       run: |
-        echo '{"scriptId":"1-e_AIny8V-y5A5c2V5jD362_soMPyPzG22a91dsJg-sCJJLh2s2pDI6v","rootDir":"./src"}' > .clasp.json
+        echo '{"scriptId":"13rP0O-v6OElRkt4JP233chfk8K6EDrWohsV8fiIdBEW1EgYn8NQFdBJ-","rootDir":"./src"}' > .clasp.json
 
     - name: 'Transform Secret and Create Credentials'
       run: |
