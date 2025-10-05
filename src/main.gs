@@ -1,64 +1,97 @@
 /**
  * @fileoverview プロジェクトJSONファイル群を安全かつ効率的に更新・資産化するための公式エンジン
- * @version 6.0 (開発フロー確定)
- * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。
+ * @version 7.0 (ID管理方式の変更、バグ修正)
+ * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。フォルダIDをスクリプトプロパティで管理する方式に変更。
  */
 
 // =========================================================================================
-// グローバル設定（ご自身の環境に合わせて変更してください）
+// ▼▼▼【設定用】GASプロジェクトのプロパティを管理する関数群 ▼▼▼
 // =========================================================================================
 
-// ▼▼▼【要設定】▼▼▼
-const MASTER_FOLDER_ID = "1VK3Y3uFwgxdoVTiDSkl5SS6lGnla90P4"; // マスターJSONファイル群が格納されているフォルダID
-const ARCHIVE_FOLDER_ID = "1sVHBxUqJj7fN9uVgw8AGo1hhXlhTWiQw"; // アーカイブ（Deltas, Snapshots）を保存するフォルダID
-// ▲▲▲▲▲▲▲▲▲▲▲▲
+/**
+ * 💡 この関数を一度実行して、フォルダIDをスクリプトプロパティに保存します。
+ * フォルダIDが変更になった場合も、この中の値を書き換えて再度実行してください。
+ */
+function setFolderIds() {
+  const properties = PropertiesService.getScriptProperties();
+  properties.setProperties({
+    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc', // マスターJSONファイル群が格納されているフォルダID
+    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'  // アーカイブ（Deltas, Snapshots）を保存するフォルダID
+  });
+  Logger.log('✅ フォルダIDをスクリプトプロパティに保存しました。');
+}
+
+/**
+ * スクリプトプロパティからフォルダIDを取得します。
+ * @returns {{MASTER_FOLDER_ID: string, ARCHIVE_FOLDER_ID: string}} フォルダIDを含むオブジェクト
+ */
+function getFolderIds() {
+  const properties = PropertiesService.getScriptProperties();
+  const masterFolderId = properties.getProperty('MASTER_FOLDER_ID');
+  const archiveFolderId = properties.getProperty('ARCHIVE_FOLDER_ID');
+  
+  if (!masterFolderId || !archiveFolderId) {
+    const message = '❌ スクリプトプロパティにフォルダIDが設定されていません。「setFolderIds」関数を実行して、IDを設定してください。';
+    Logger.log(message);
+    throw new Error(message);
+  }
+  
+  return {
+    MASTER_FOLDER_ID: masterFolderId,
+    ARCHIVE_FOLDER_ID: archiveFolderId
+  };
+}
+
 
 // =========================================================================================
 // ▼▼▼【処理の心臓部】個別の更新関数から呼び出される共通更新エンジン ▼▼▼
 // =========================================================================================
 
 function applyProjectUpdate(config) {
-  const masterFolder = DriveApp.getFolderById(MASTER_FOLDER_ID);
-  const archiveFolder = DriveApp.getFolderById(ARCHIVE_FOLDER_ID);
-  
-  let deltasFolder;
-  const deltasFolders = archiveFolder.getFoldersByName("Deltas");
-  deltasFolder = deltasFolders.hasNext() ? deltasFolders.next() : archiveFolder.createFolder("Deltas");
-
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filesToUpdate = Object.keys(config.updates);
-
   try {
+    const FOLDER_IDS = getFolderIds();
+    const masterFolder = DriveApp.getFolderById(FOLDER_IDS.MASTER_FOLDER_ID);
+    const archiveFolder = DriveApp.getFolderById(FOLDER_IDS.ARCHIVE_FOLDER_ID);
+
+    let deltasFolder;
+    const deltasFolders = archiveFolder.getFoldersByName("Deltas");
+    deltasFolder = deltasFolders.hasNext() ? deltasFolders.next() : archiveFolder.createFolder("Deltas");
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filesToUpdate = Object.keys(config.updates);
+
     filesToUpdate.forEach(fileName => {
       const files = masterFolder.getFilesByName(fileName);
+      const updateFunction = config.updates[fileName];
+      let fileObject = {};
+      let targetFile;
+
       if (files.hasNext()) {
-        const file = files.next();
+        // --- ファイルが存在する場合：バックアップ、読み取り、更新 ---
+        targetFile = files.next();
+        
+        // バックアップを作成
         const backupFileName = `${timestamp}_${fileName}`;
-        file.makeCopy(backupFileName, deltasFolder);
-      }
-    });
-
-    filesToUpdate.forEach(fileName => {
-      const targetFiles = masterFolder.getFilesByName(fileName);
-      let fileObject = {}; 
-
-      if (targetFiles.hasNext()) {
-        const file = targetFiles.next();
-        const content = file.getBlob().getDataAsString();
+        targetFile.makeCopy(backupFileName, deltasFolder);
+        
+        // ファイル内容を読み取り
+        const content = targetFile.getBlob().getDataAsString();
         if (content && fileName.toLowerCase().endsWith('.json')) {
-            fileObject = JSON.parse(content);
+          fileObject = JSON.parse(content);
         }
       }
 
-      const updatedObject = config.updates[fileName](fileObject);
+      // --- 更新処理を実行 ---
+      const updatedObject = updateFunction(fileObject);
       const newContent = JSON.stringify(updatedObject, null, 2);
 
-      let fileToUpdate;
-      if (targetFiles.hasNext()) {
-          fileToUpdate = targetFiles.next();
-          fileToUpdate.setContent(newContent);
+      // --- 結果を書き込み ---
+      if (targetFile) {
+        // 既存のファイルを更新
+        targetFile.setContent(newContent);
       } else {
-          masterFolder.createFile(fileName, newContent);
+        // ファイルが存在しなかった場合は新規作成
+        masterFolder.createFile(fileName, newContent);
       }
     });
 
@@ -75,24 +108,30 @@ function applyProjectUpdate(config) {
 // =========================================================================================
 
 function createSnapshot() {
-  const masterFolder = DriveApp.getFolderById(MASTER_FOLDER_ID);
-  const archiveFolder = DriveApp.getFolderById(ARCHIVE_FOLDER_ID);
+  try {
+    const FOLDER_IDS = getFolderIds();
+    const masterFolder = DriveApp.getFolderById(FOLDER_IDS.MASTER_FOLDER_ID);
+    const archiveFolder = DriveApp.getFolderById(FOLDER_IDS.ARCHIVE_FOLDER_ID);
 
-  let snapshotsFolder;
-  const snapshotFolders = archiveFolder.getFoldersByName("Snapshots");
-  snapshotsFolder = snapshotFolders.hasNext() ? snapshotFolders.next() : archiveFolder.createFolder("Snapshots");
-  
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const snapshotName = `Snapshot_${timestamp}`;
-  const newSnapshotFolder = snapshotsFolder.createFolder(snapshotName);
-  
-  const files = masterFolder.getFiles();
-  while(files.hasNext()){
-    const file = files.next();
-    file.makeCopy(file.getName(), newSnapshotFolder);
+    let snapshotsFolder;
+    const snapshotFolders = archiveFolder.getFoldersByName("Snapshots");
+    snapshotsFolder = snapshotFolders.hasNext() ? snapshotFolders.next() : archiveFolder.createFolder("Snapshots");
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const snapshotName = `Snapshot_${timestamp}`;
+    const newSnapshotFolder = snapshotsFolder.createFolder(snapshotName);
+    
+    const files = masterFolder.getFiles();
+    while(files.hasNext()){
+      const file = files.next();
+      file.makeCopy(file.getName(), newSnapshotFolder);
+    }
+    
+    Logger.log(`✅ '${snapshotName}' に現在の全マスターファイルのスナップショットを作成しました。`);
+  } catch (error) {
+    Logger.log(`❌ スナップショットの作成中にエラーが発生しました: ${error.toString()}`);
+    Logger.log(`エラー詳細: ${error.stack}`);
   }
-  
-  Logger.log(`✅ '${snapshotName}' に現在の全マスターファイルのスナップショットを作成しました。`);
 }
 
 // =========================================================================================
@@ -143,12 +182,7 @@ function _runUpdate_FinalizeConstitution() {
   applyProjectUpdate(updateConfig_FinalizeConstitution);
 }
 
-// ---------------------------------------------------------------------------------
-// ▼▼▼【今回実行する唯一の関数】▼▼▼
-// ---------------------------------------------------------------------------------
-
 /**
- * 💡 この関数を実行してください
  * 【更新履歴20】システム構成図とアカウント責務の定義
  */
 const updateConfig_RecordSystemArchitecture = {
@@ -176,9 +210,12 @@ const updateConfig_RecordSystemArchitecture = {
   }
 };
 
-/**
- * 💡 この関数を実行してください
- */
-function runUpdate_RecordSystemArchitecture() {
+function _runUpdate_RecordSystemArchitecture() {
   applyProjectUpdate(updateConfig_RecordSystemArchitecture);
 }
+
+// ---------------------------------------------------------------------------------
+// ▼▼▼【今回実行する唯一の関数】▼▼▼
+// ---------------------------------------------------------------------------------
+
+// 新しい更新はここに追記してください
