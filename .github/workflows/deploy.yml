@@ -4,17 +4,31 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'  # 監視対象を現在の正しいsrcディレクトリに設定
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup clasp
-        uses: google/clasp-action@v2
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          creds: ${{ secrets.CLASPRC_JSON }}
-      - name: Deploy
+          node-version: '20' # より新しいNode.jsバージョンを指定
+
+      - name: Install Google Clasp
+        run: npm install -g @google/clasp
+
+      - name: Create .clasp.json credentials
+        # GitHub SecretsからスクリプトIDを安全に読み込む
+        run: echo '{"scriptId":"${{ secrets.GAS_SCRIPT_ID }}","rootDir":"./src"}' > .clasp.json
+
+      - name: Create .clasprc.json for authentication
+        # GitHub Secretsから認証情報を安全に読み込む
+        run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+
+      - name: Push files to Google Apps Script
         run: clasp push -f
-        working-directory: ./src
