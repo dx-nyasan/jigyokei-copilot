@@ -8,30 +8,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    - name: Install dependencies
-      run: |
-        npm install -g @google/clasp
-        sudo apt-get update && sudo apt-get install -y jq
-
-    - name: Create project-level .clasp.json
-      run: |
-        echo '{"scriptId":"13rP0O-v6OElRkt4JP233chfk8K6EDrWohsV8fiIdBEW1EgYn8NQFdBJ-","rootDir":"./src"}' > .clasp.json
-
-    - name: 'Transform Secret and Create Credentials'
-      run: |
-        echo '${{ secrets.CLASPRC_JSON }}' | jq '{token: {access_token: .tokens.default.access_token, refresh_token: .tokens.default.refresh_token}, oauth2ClientSettings: {clientId: .tokens.default.client_id, clientSecret: .tokens.default.client_secret, redirectUri: "http://localhost"}}' > ~/.clasprc.json
-
-    - name: Push to Apps Script
-      run: clasp push --force
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup clasp
+        uses: google/clasp-action@v2
+        with:
+          creds: ${{ secrets.CLASPRC_JSON }}
+      - name: Deploy
+        run: clasp push -f
+        working-directory: ./src

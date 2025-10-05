@@ -1,0 +1,22 @@
+
+{
+  "schemaVersion": "1.0",
+  "sessionId": "session-JigyoKei-001",
+  "creationTimestamp": "2025-10-04T10:00:00Z",
+  "lastUpdateTimestamp": "2025-10-04T10:00:00Z",
+  "currentTheme": {
+    "themeId": "theme-01",
+    "themeName": "初期投資（店舗契約）の妥当性",
+    "keywords": ["初期投資", "店舗契約", "家賃", "敷金"],
+    "summary": "創業者（佐藤）が検討している店舗物件の契約内容について、リスクを検討している。"
+  },
+  "dialogueHistory": [
+    {
+      "turn": 1,
+      "speaker": "創業者",
+      "utterance": "こんにちは、今日は事業計画の相談をお願いします。まず、考えている店舗の契約についてなんですが...",
+      "timestamp": "2025-10-04T10:00:15Z"
+    }
+  ],
+  "detectedRisks": []
+}
