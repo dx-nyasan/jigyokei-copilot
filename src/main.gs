@@ -1,7 +1,7 @@
 /**
  * @fileoverview プロジェクトJSONファイル群を安全かつ効率的に更新・資産化するための公式エンジン
- * @version 8.0 (自己診断デバッグモード搭載)
- * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。フォルダIDをスクリプトプロパティで管理する方式に変更。
+ * @version 10.0 (製品版)
+ * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。フォルダIDをスクリプトプロパティで管理する最終安定版。
  */
 
 // =========================================================================================
@@ -11,8 +11,8 @@
 function setFolderIds() {
   const properties = PropertiesService.getScriptProperties();
   properties.setProperties({
-    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc',
-    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'
+    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc', // マスターJSONファイル群が格納されているフォルダID
+    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'  // アーカイブ（Deltas, Snapshots）を保存するフォルダID
   });
   Logger.log('✅ フォルダIDをスクリプトプロパティに保存しました。');
 }
@@ -34,81 +34,58 @@ function getFolderIds() {
   };
 }
 
+
 // =========================================================================================
-// ▼▼▼【処理の心臓部】自己診断デバッグモード搭載の共通更新エンジン ▼▼▼
+// ▼▼▼【処理の心臓部】個別の更新関数から呼び出される共通更新エンジン ▼▼▼
 // =========================================================================================
 
 function applyProjectUpdate(config) {
   try {
     const FOLDER_IDS = getFolderIds();
-    Logger.log(`[DEBUG] フォルダIDを取得しました: MASTER=${FOLDER_IDS.MASTER_FOLDER_ID}`);
     const masterFolder = DriveApp.getFolderById(FOLDER_IDS.MASTER_FOLDER_ID);
     const archiveFolder = DriveApp.getFolderById(FOLDER_IDS.ARCHIVE_FOLDER_ID);
 
     let deltasFolder;
     const deltasFolders = archiveFolder.getFoldersByName("Deltas");
     deltasFolder = deltasFolders.hasNext() ? deltasFolders.next() : archiveFolder.createFolder("Deltas");
-    Logger.log(`[DEBUG] アーカイブフォルダを準備しました。`);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filesToUpdate = Object.keys(config.updates);
-    Logger.log(`[DEBUG] 更新対象ファイルリスト: ${filesToUpdate.join(', ')}`);
 
     filesToUpdate.forEach(fileName => {
-      Logger.log(`[DEBUG] --------------------------------------------------`);
-      Logger.log(`[DEBUG] ファイル「${fileName}」の更新処理を開始します。`);
-      try {
-        const files = masterFolder.getFilesByName(fileName);
-        const updateFunction = config.updates[fileName];
-        let fileObject = {};
-        let targetFile;
+      const files = masterFolder.getFilesByName(fileName);
+      const updateFunction = config.updates[fileName];
+      let fileObject = {};
+      let targetFile;
 
-        if (files.hasNext()) {
-          targetFile = files.next();
-          Logger.log(`[DEBUG] 既存ファイル「${fileName}」を発見。バックアップを作成します。`);
-          targetFile.makeCopy(`${timestamp}_${fileName}`, deltasFolder);
-          
-          const content = targetFile.getBlob().getDataAsString();
-          if (content && fileName.toLowerCase().endsWith('.json')) {
-            Logger.log(`[DEBUG] ファイル内容を読み込み、JSONとしてパースします。`);
-            fileObject = JSON.parse(content);
-          }
-        } else {
-            Logger.log(`[WARN] ファイル「${fileName}」が見つかりません。新規作成します。`);
+      if (files.hasNext()) {
+        targetFile = files.next();
+        // バックアップを作成
+        targetFile.makeCopy(`${timestamp}_${fileName}`, deltasFolder);
+        // ファイル内容を読み取り
+        const content = targetFile.getBlob().getDataAsString();
+        if (content && fileName.toLowerCase().endsWith('.json')) {
+          fileObject = JSON.parse(content);
         }
-
-        Logger.log(`[DEBUG] 更新関数を実行します...`);
-        const updatedObject = updateFunction(fileObject);
-        Logger.log(`[DEBUG] 更新関数が完了しました。`);
-
-        if (typeof updatedObject === 'undefined' || updatedObject === null) {
-          throw new Error("更新関数が有効なオブジェクトを返しませんでした (undefined or null)。処理を中断します。");
-        }
-
-        const newContent = JSON.stringify(updatedObject, null, 2);
-        Logger.log(`[DEBUG] 更新後の内容をJSON文字列に変換しました。`);
-
-        if (targetFile) {
-          Logger.log(`[DEBUG] 既存ファイル「${fileName}」の内容を上書きします...`);
-          targetFile.setContent(newContent);
-        } else {
-          Logger.log(`[DEBUG] 新規ファイル「${fileName}」を作成します...`);
-          masterFolder.createFile(fileName, newContent);
-        }
-        Logger.log(`[SUCCESS] ✅ ファイル「${fileName}」の書き込みが正常に完了しました。`);
-
-      } catch (e) {
-         Logger.log(`[ERROR] ❌ ファイル「${fileName}」の更新中にエラーが発生しました: ${e.toString()}`);
-         Logger.log(`[ERROR STACK] ${e.stack}`);
       }
-      Logger.log(`[DEBUG] --------------------------------------------------`);
+
+      // 更新処理を実行
+      const updatedObject = updateFunction(fileObject);
+      const newContent = JSON.stringify(updatedObject, null, 2);
+
+      // 結果を書き込み
+      if (targetFile) {
+        targetFile.setContent(newContent);
+      } else {
+        masterFolder.createFile(fileName, newContent);
+      }
     });
 
-    Logger.log(`✅ すべての更新処理ループが終了しました。`);
+    Logger.log(`✅ すべての更新処理が正常に完了しました。`);
 
   } catch (error) {
-    Logger.log(`[FATAL] ❌ 全体処理の実行中に致命的なエラーが発生しました: ${error.toString()}`);
-    Logger.log(`[FATAL ERROR STACK] ${error.stack}`);
+    Logger.log(`❌ エラーが発生しました: ${error.toString()}`);
+    Logger.log(`エラー詳細: ${error.stack}`);
   }
 }
 
@@ -158,26 +135,12 @@ function createSnapshot() {
 // ▼▼▼ アーカイブ済みの更新履歴 ▼▼▼
 // ---------------------------------------------------------------------------------
 
-function _runUpdate_FinalizeAccountRoles() {
-  applyProjectUpdate(updateConfig_FinalizeAccountRoles);
+// ... (過去の実行済み関数はここにアーカイブされていく) ...
+
+function _runUpdate_FinalizeArchitecture() {
+  applyProjectUpdate(updateConfig_FinalizeArchitecture);
 }
 
-const updateConfig_FinalizeRolesAndConnections = {
-  // ... (previous config) ...
-};
-
-function _runUpdate_FinalizeRolesAndConnections() {
-  applyProjectUpdate(updateConfig_FinalizeRolesAndConnections);
-}
-
-// ---------------------------------------------------------------------------------
-// ▼▼▼【今回実行する唯一の関数】▼▼▼
-// ---------------------------------------------------------------------------------
-
-/**
- * 💡 この関数を実行してください
- * 【更新履歴23】最終アーキテクチャ決定
- */
 const updateConfig_FinalizeArchitecture = {
   updateName: "Finalize_Data_Architecture_and_Pipeline",
   updates: {
@@ -211,9 +174,9 @@ const updateConfig_FinalizeArchitecture = {
   }
 };
 
-/**
- * 💡 この関数を実行してください
- */
-function runUpdate_FinalizeArchitecture() {
-  applyProjectUpdate(updateConfig_FinalizeArchitecture);
-}
+
+// ---------------------------------------------------------------------------------
+// ▼▼▼【今回実行する唯一の関数】▼▼▼
+// ---------------------------------------------------------------------------------
+
+// ※現在、実行待機中の新規更新はありません。
