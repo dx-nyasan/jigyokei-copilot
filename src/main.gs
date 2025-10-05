@@ -1,6 +1,6 @@
 /**
  * @fileoverview プロジェクトJSONファイル群を安全かつ効率的に更新・資産化するための公式エンジン
- * @version 5.0 (バックエンド構築フェーズ完了)
+ * @version 6.0 (開発フロー確定)
  * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。
  */
 
@@ -17,11 +17,6 @@ const ARCHIVE_FOLDER_ID = "1sVHBxUqJj7fN9uVgw8AGo1hhXlhTWiQw"; // アーカイ�
 // ▼▼▼【処理の心臓部】個別の更新関数から呼び出される共通更新エンジン ▼▼▼
 // =========================================================================================
 
-/**
- * 設定オブジェクトに基づき、複数のJSONファイルを安全に更新するメイン関数
- * （差分バックアップ作成と本体更新を一体で実行）
- * @param {object} config - 更新内容を定義した設定オブジェクト
- */
 function applyProjectUpdate(config) {
   const masterFolder = DriveApp.getFolderById(MASTER_FOLDER_ID);
   const archiveFolder = DriveApp.getFolderById(ARCHIVE_FOLDER_ID);
@@ -34,18 +29,15 @@ function applyProjectUpdate(config) {
   const filesToUpdate = Object.keys(config.updates);
 
   try {
-    // 1. 変更対象のファイルをDeltasフォルダにバックアップ
     filesToUpdate.forEach(fileName => {
       const files = masterFolder.getFilesByName(fileName);
       if (files.hasNext()) {
         const file = files.next();
         const backupFileName = `${timestamp}_${fileName}`;
         file.makeCopy(backupFileName, deltasFolder);
-        Logger.log(`'${fileName}' の変更前バージョンを '${backupFileName}' としてDeltasに保存しました。`);
       }
     });
 
-    // 2. 全てのファイルを更新
     filesToUpdate.forEach(fileName => {
       const targetFiles = masterFolder.getFilesByName(fileName);
       let fileObject = {}; 
@@ -53,32 +45,20 @@ function applyProjectUpdate(config) {
       if (targetFiles.hasNext()) {
         const file = targetFiles.next();
         const content = file.getBlob().getDataAsString();
-        if (content) {
-          // JSONファイル以外はそのまま文字列として扱う
-          if (fileName.toLowerCase().endsWith('.json')) {
+        if (content && fileName.toLowerCase().endsWith('.json')) {
             fileObject = JSON.parse(content);
-          } else {
-            fileObject = content;
-          }
         }
       }
 
       const updatedObject = config.updates[fileName](fileObject);
-      
-      let newContent;
-      if (typeof updatedObject === 'string') {
-        newContent = updatedObject;
-      } else {
-        newContent = JSON.stringify(updatedObject, null, 2);
-      }
+      const newContent = JSON.stringify(updatedObject, null, 2);
 
-      const filesForUpdate = masterFolder.getFilesByName(fileName);
-      if (filesForUpdate.hasNext()) {
-          filesForUpdate.next().setContent(newContent);
-          Logger.log(`'${fileName}' を正常に更新しました。`);
+      let fileToUpdate;
+      if (targetFiles.hasNext()) {
+          fileToUpdate = targetFiles.next();
+          fileToUpdate.setContent(newContent);
       } else {
           masterFolder.createFile(fileName, newContent);
-          Logger.log(`'${fileName}' を新規作成しました。`);
       }
     });
 
@@ -87,7 +67,6 @@ function applyProjectUpdate(config) {
   } catch (error) {
     Logger.log(`❌ エラーが発生しました: ${error.toString()}`);
     Logger.log(`エラー詳細: ${error.stack}`);
-    Logger.log(`更新処理は中断されました。Deltasフォルダ内のバックアップを確認してください。`);
   }
 }
 
@@ -95,9 +74,6 @@ function applyProjectUpdate(config) {
 // ▼▼▼【手動実行用】任意のタイミングで全体をバックアップする関数 ▼▼▼
 // =========================================================================================
 
-/**
- * 現在のすべてのマスターファイルをSnapshotsフォルダに保存する関数
- */
 function createSnapshot() {
   const masterFolder = DriveApp.getFolderById(MASTER_FOLDER_ID);
   const archiveFolder = DriveApp.getFolderById(ARCHIVE_FOLDER_ID);
@@ -110,8 +86,6 @@ function createSnapshot() {
   const snapshotName = `Snapshot_${timestamp}`;
   const newSnapshotFolder = snapshotsFolder.createFolder(snapshotName);
   
-  Logger.log(`スナップショットフォルダ '${snapshotName}' を作成しました。`);
-
   const files = masterFolder.getFiles();
   while(files.hasNext()){
     const file = files.next();
@@ -134,57 +108,16 @@ function createSnapshot() {
 
 // ---------------------------------------------------------------------------------
 // ▼▼▼ アーカイブ済みの更新履歴 ▼▼▼
-// （実行メニューには表示されません）
 // ---------------------------------------------------------------------------------
 
-// 【更新履歴1】〜【更新履歴14】は省略
-
-// 【更新履歴15】（アーカイブ済み）
-const updateConfig_CreateDevLogPhase2 = { /* ... 内容は省略 ... */ };
-function _runUpdate_CreateDevLogPhase2() {
-  applyProjectUpdate(updateConfig_CreateDevLogPhase2);
-}
-
-
-// ---------------------------------------------------------------------------------
-// ▼▼▼【今回実行する唯一の関数】▼▼▼
-// （新しい更新を追加したら、この関数の名前を `_runUpdate...` に変更してください）
-// ---------------------------------------------------------------------------------
+// 【更新履歴1】〜【更新履歴18】は省略
 
 /**
- * 💡 この関数を実行してください
- * 【更新履歴16】バックエンド構築フェーズの完了と次フェーズへの移行
+ * 【更新履歴19】最終開発フロー及びアカウント認証ルールの公式化
  */
-const updateConfig_FinalizeBackendPhase = {
-  updateName: "Finalize_Backend_Development_Phase_And_Transition_To_Next",
+const updateConfig_FinalizeConstitution = {
+  updateName: "Finalize_Development_Constitution_including_Workflow_and_Auth_Rules",
   updates: {
-    "マスタープラン.JSON": function(currentPlan) {
-      const BACKEND_URL = "https://jigyokei-copilot-backend-310523847405.asia-northeast2.run.app";
-
-      // 1. 機能ブロックにエンドポイントURLを追記
-      const backendBlock = currentPlan.systemArchitecture.functionalBlocks.find(b => b.priority === 1);
-      if (backendBlock) {
-        backendBlock.status = "完了";
-        backendBlock.endpointURL = BACKEND_URL;
-      }
-
-      // 2. ロードマップのステータスを更新
-      const phase1 = currentPlan.roadmap.find(p => p.phase === 1);
-      if (phase1) {
-        phase1.status = "完了";
-        phase1.title = "【完了】バックエンド構築フェーズ";
-      }
-
-      const phase2 = currentPlan.roadmap.find(p => p.phase === 2);
-      if (phase2) {
-        phase2.status = "進行中";
-        phase2.title = "【進行中】データベースとGUIの連携開発フェーズ";
-      }
-
-      // 3. 最終更新日時を更新
-      currentPlan.lastModified = new Date().toISOString();
-      return currentPlan;
-    },
     "意思決定ログ.JSON": function(currentLog) {
       const now = new Date();
       const timestamp = now.toISOString();
@@ -193,32 +126,59 @@ const updateConfig_FinalizeBackendPhase = {
       const newLogEntry = {
         "logId": logId,
         "timestamp": timestamp,
-        "subject": "バックエンド構築フェーズの公式な完了を宣言",
-        "context_why": "バックエンドAPIのCloud Runへのデプロイが成功し、全世界からアクセス可能な恒久的なエンドポイントURLが確保されたため。",
-        "decision_what": "バックエンド構築フェーズ（ロードマップのフェーズ1）の完了を正式に決定。成功の証として、デプロイされたURLをマスタープランに記録し、プロジェクトのステータスを次なる『データベースとGUIの連携開発フェーズ』へと進める。",
-        "impact_how": "プロジェクトの基盤となるサーバーサイド機能が完全に確立された。これにより、今後はフロントエンド（GUI）からのデータを受け取り、それを処理して返すという、アプリケーションの核心的な価値提供に集中できるようになった。"
+        "subject": "最終開発フロー及びアカウント認証ルールの公式化",
+        "context_why": "CI/CDパイプライン構築後、その運用方法と人間-AIの役割分担を明確にする必要があった。また、開発者が複数のGoogleアカウント（組織用、個人用、プロジェクト用）を使い分けているため、認証を伴う操作での混乱やミスを防ぐための明確なルールが求められた。",
+        "decision_what": "1. 【開発フローの採択】開発の最終的な意思決定（コミットメッセージ確定）と実行権限（git push）は常に人間が保持し、AIはその前段階の準備（コード生成、コマンド準備）までを担う協業モデルを採択する。\n2. 【認証ルールの制定】AIが開発者に認証を伴う操作（例: GitHubへのpush, Google Cloudへのログイン）を依頼する際は、使用すべきアカウント（admin@dx-nyasan.com, hirobrandneo@gmail.com, yochiyochi.dx.channel@gmail.com のいずれか）を必ず明示することを公式ルールとして制定する。",
+        "impact_how": "AIの効率性と人間の最終統制を両立させる安全な開発体制が確立された。加えて、アカウントの使い分けが明確になることで、認証エラーや権限設定のミスが撲滅され、開発者はより安心して本質的な開発作業に集中できるようになった。これはプロジェクトの『憲法』となる。"
       };
       if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
       currentLog.decisionLog.logs.push(newLogEntry);
       currentLog.decisionLog.最終更新日 = timestamp;
       return currentLog;
-    },
-    "プロジェクト状態.JSON": function(currentStatus) {
-      const now = new Date().toISOString();
-      if (!currentStatus.projectStatus) currentStatus.projectStatus = {};
-      const status = currentStatus.projectStatus;
-
-      status.最終更新日 = now;
-      status.status = "バックエンド構築完了・連携開発フェーズ";
-      status.lastCompletedMilestone = "バックエンドAPIのデプロイに成功し、マスタープランのロードマップを更新。プロジェクトは正式に次の開発フェーズへ移行した。";
-      status.nextActionableStep = "フロントエンド（GUI）と、今回デプロイしたバックエンドAPIとの間で、データの送受信を行う連携部分の開発に着手する。";
-      return currentStatus;
     }
   }
 };
+
+function _runUpdate_FinalizeConstitution() {
+  applyProjectUpdate(updateConfig_FinalizeConstitution);
+}
+
+// ---------------------------------------------------------------------------------
+// ▼▼▼【今回実行する唯一の関数】▼▼▼
+// ---------------------------------------------------------------------------------
+
+/**
+ * 💡 この関数を実行してください
+ * 【更新履歴20】システム構成図とアカウント責務の定義
+ */
+const updateConfig_RecordSystemArchitecture = {
+  updateName: "Record_System_Architecture_and_Account_Responsibilities",
+  updates: {
+    "意思決定ログ.JSON": function(currentLog) {
+      const now = new Date();
+      const timestamp = now.toISOString();
+      const logId = `LOG-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-5)}`;
+      
+      const newLogEntry = {
+        "logId": logId,
+        "timestamp": timestamp,
+        "subject": "【正式記録】システム構成図とアカウント責務の定義",
+        "context_why": "開発体制が固まった現時点において、各サービス（IDX, GitHub, GAS, GDrive）の役割と、それらを操作するGoogleアカウント（admin@dx-nyasan.com, yochiyochi.dx.channel@gmail.com）の権限・責務を明確に文書化し、プロジェクトの公式記録とするため。",
+        "decision_what": "以下の4つのサービス構成と、それぞれに関わるアカウントの役割・権限を定義した文書を、正式な意思決定として記録する。\n\n1. **Firebase Studio (IDX):** 開発と思考の場。アカウント：admin@dx-nyasan.com（IDEアクセス）、yochiyochi.dx.channel@gmail.com（git push認証）。\n2. **GitHub:** コードの保管庫とCI/CDの起点。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。\n3. **Google Apps Script (GAS):** 本番実行環境。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。\n4. **Google Drive:** 永続データストレージ。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。",
+        "impact_how": "これにより、開発者（人間・AI双方）が役割分担を正確に理解し、権限エラーやセキュリティリスクを低減できる。この記録は、将来のプロジェクト参加者への引き継ぎ資料としても機能する。"
+      };
+      
+      if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
+      currentLog.decisionLog.logs.push(newLogEntry);
+      currentLog.decisionLog.最終更新日 = timestamp;
+      return currentLog;
+    }
+  }
+};
+
 /**
  * 💡 この関数を実行してください
  */
-function runUpdate_FinalizeBackendPhase() {
-  applyProjectUpdate(updateConfig_FinalizeBackendPhase);
+function runUpdate_RecordSystemArchitecture() {
+  applyProjectUpdate(updateConfig_RecordSystemArchitecture);
 }
