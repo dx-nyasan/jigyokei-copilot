@@ -20,15 +20,18 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Install clasp
-      run: npm install -g @google/clasp
+    - name: Install dependencies
+      run: |
+        npm install -g @google/clasp
+        sudo apt-get update && sudo apt-get install -y jq
 
     - name: Create project-level .clasp.json
       run: |
         echo '{"scriptId":"1-e_AIny8V-y5A5c2V5jD362_soMPyPzG22a91dsJg-sCJJLh2s2pDI6v","rootDir":"./src"}' > .clasp.json
 
-    - name: Create clasp credentials file
-      run: echo "${{ secrets.CLASPRC_JSON }}" > ~/.clasprc.json
+    - name: 'Transform Secret and Create Credentials'
+      run: |
+        echo '${{ secrets.CLASPRC_JSON }}' | jq '{token: {access_token: .tokens.default.access_token, refresh_token: .tokens.default.refresh_token}, oauth2ClientSettings: {clientId: .tokens.default.client_id, clientSecret: .tokens.default.client_secret, redirectUri: "http://localhost"}}' > ~/.clasprc.json
 
     - name: Push to Apps Script
       run: clasp push --force
