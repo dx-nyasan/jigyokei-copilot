@@ -1,0 +1,39 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: 'projects/310523847405/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider'
+        service_account: 'github-actions-deployer@jigyokei-copilot-473815.iam.gserviceaccount.com'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install clasp
+      run: npm install -g @google/clasp
+
+    - name: Create .clasp.json
+      run: |
+        echo '{"scriptId":"1-e_AIny8V-y5A5c2V5jD362_soMPyPzG22a91dsJg-sCJJLh2s2pDI6v","rootDir":"./src"}' > .clasp.json
+
+    - name: Push to Apps Script
+      run: clasp push --force
