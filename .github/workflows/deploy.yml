@@ -28,10 +28,7 @@ jobs:
         echo '{"scriptId":"1-e_AIny8V-y5A5c2V5jD362_soMPyPzG22a91dsJg-sCJJLh2s2pDI6v","rootDir":"./src"}' > .clasp.json
 
     - name: Create clasp credentials file
-      run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
-
-    - name: '[DEBUG] Display clasp credentials file'
-      run: cat ~/.clasprc.json
+      run: echo "${{ secrets.CLASPRC_JSON }}" > ~/.clasprc.json
 
     - name: Push to Apps Script
       run: clasp push --force
