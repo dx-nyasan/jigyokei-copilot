@@ -1,6 +1,6 @@
 /**
  * @fileoverview プロジェクトJSONファイル群を安全かつ効率的に更新・資産化するための公式エンジン
- * @version 7.0 (ID管理方式の変更、バグ修正)
+ * @version 7.2 (アカウント責務とリソース紐付けの定義)
  * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。フォルダIDをスクリプトプロパティで管理する方式に変更。
  */
 
@@ -149,73 +149,46 @@ function createSnapshot() {
 // ▼▼▼ アーカイブ済みの更新履歴 ▼▼▼
 // ---------------------------------------------------------------------------------
 
-// 【更新履歴1】〜【更新履歴18】は省略
-
-/**
- * 【更新履歴19】最終開発フロー及びアカウント認証ルールの公式化
- */
-const updateConfig_FinalizeConstitution = {
-  updateName: "Finalize_Development_Constitution_including_Workflow_and_Auth_Rules",
-  updates: {
-    "意思決定ログ.JSON": function(currentLog) {
-      const now = new Date();
-      const timestamp = now.toISOString();
-      const logId = `LOG-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-5)}`;
-      
-      const newLogEntry = {
-        "logId": logId,
-        "timestamp": timestamp,
-        "subject": "最終開発フロー及びアカウント認証ルールの公式化",
-        "context_why": "CI/CDパイプライン構築後、その運用方法と人間-AIの役割分担を明確にする必要があった。また、開発者が複数のGoogleアカウント（組織用、個人用、プロジェクト用）を使い分けているため、認証を伴う操作での混乱やミスを防ぐための明確なルールが求められた。",
-        "decision_what": "1. 【開発フローの採択】開発の最終的な意思決定（コミットメッセージ確定）と実行権限（git push）は常に人間が保持し、AIはその前段階の準備（コード生成、コマンド準備）までを担う協業モデルを採択する。\n2. 【認証ルールの制定】AIが開発者に認証を伴う操作（例: GitHubへのpush, Google Cloudへのログイン）を依頼する際は、使用すべきアカウント（admin@dx-nyasan.com, hirobrandneo@gmail.com, yochiyochi.dx.channel@gmail.com のいずれか）を必ず明示することを公式ルールとして制定する。",
-        "impact_how": "AIの効率性と人間の最終統制を両立させる安全な開発体制が確立された。加えて、アカウントの使い分けが明確になることで、認証エラーや権限設定のミスが撲滅され、開発者はより安心して本質的な開発作業に集中できるようになった。これはプロジェクトの『憲法』となる。"
-      };
-      if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
-      currentLog.decisionLog.logs.push(newLogEntry);
-      currentLog.decisionLog.最終更新日 = timestamp;
-      return currentLog;
-    }
-  }
-};
-
-function _runUpdate_FinalizeConstitution() {
-  applyProjectUpdate(updateConfig_FinalizeConstitution);
-}
-
-/**
- * 【更新履歴20】システム構成図とアカウント責務の定義
- */
-const updateConfig_RecordSystemArchitecture = {
-  updateName: "Record_System_Architecture_and_Account_Responsibilities",
-  updates: {
-    "意思決定ログ.JSON": function(currentLog) {
-      const now = new Date();
-      const timestamp = now.toISOString();
-      const logId = `LOG-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-5)}`;
-      
-      const newLogEntry = {
-        "logId": logId,
-        "timestamp": timestamp,
-        "subject": "【正式記録】システム構成図とアカウント責務の定義",
-        "context_why": "開発体制が固まった現時点において、各サービス（IDX, GitHub, GAS, GDrive）の役割と、それらを操作するGoogleアカウント（admin@dx-nyasan.com, yochiyochi.dx.channel@gmail.com）の権限・責務を明確に文書化し、プロジェクトの公式記録とするため。",
-        "decision_what": "以下の4つのサービス構成と、それぞれに関わるアカウントの役割・権限を定義した文書を、正式な意思決定として記録する。\n\n1. **Firebase Studio (IDX):** 開発と思考の場。アカウント：admin@dx-nyasan.com（IDEアクセス）、yochiyochi.dx.channel@gmail.com（git push認証）。\n2. **GitHub:** コードの保管庫とCI/CDの起点。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。\n3. **Google Apps Script (GAS):** 本番実行環境。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。\n4. **Google Drive:** 永続データストレージ。アカウント：yochiyochi.dx.channel@gmail.com（Owner権限）。",
-        "impact_how": "これにより、開発者（人間・AI双方）が役割分担を正確に理解し、権限エラーやセキュリティリスクを低減できる。この記録は、将来のプロジェクト参加者への引き継ぎ資料としても機能する。"
-      };
-      
-      if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
-      currentLog.decisionLog.logs.push(newLogEntry);
-      currentLog.decisionLog.最終更新日 = timestamp;
-      return currentLog;
-    }
-  }
-};
-
-function _runUpdate_RecordSystemArchitecture() {
-  applyProjectUpdate(updateConfig_RecordSystemArchitecture);
+function _runUpdate_FinalizeAccountRoles() {
+  applyProjectUpdate(updateConfig_FinalizeAccountRoles);
 }
 
 // ---------------------------------------------------------------------------------
 // ▼▼▼【今回実行する唯一の関数】▼▼▼
 // ---------------------------------------------------------------------------------
 
-// 新しい更新はここに追記してください
+/**
+ * 💡 この関数を実行してください
+ * 【更新履歴22】アカウント責務とリソース紐付けの最終定義
+ */
+const updateConfig_FinalizeRolesAndConnections = {
+  updateName: "Finalize_Account_Roles_and_Resource_Connections",
+  updates: {
+    "意思決定ログ.JSON": function(currentLog) {
+      const now = new Date();
+      const timestamp = now.toISOString();
+      const logId = `LOG-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-5)}`;
+      
+      const newLogEntry = {
+        "logId": logId,
+        "timestamp": timestamp,
+        "subject": "【公式憲法】アカウント責務とリソース紐付けの最終定義",
+        "context_why": "プロジェクトのセキュリティと運用効率を恒久的に担保するため、各サービス（GitHub, GAS）とそれを操作するGoogleアカウントの役割分担、権限、そして具体的なリソースの紐付けを明確に定義し、プロジェクトの憲法として記録する必要がある。",
+        "decision_what": "以下の通り、アカウントごとの役割、権限、および管理リソースを正式に定める。\n\n### 1. `admin@dx-nyasan.com` (開発者アカウント)\n- **役割:** 開発者本人（人間）。プロジェクト全体の意思決定者であり、最終的な実行責任を負う。\n- **権限:**\n  - **Firebase Studio (IDX):** IDEへのアクセスと操作。\n  - **Google Cloud:** プロジェクト管理全般。\n  - **GitHub:** Webコンソールからのリポジトリ管理。コミットとプッシュの最終承認。\n  - **Google Drive:** Webコンソールからのファイル閲覧・管理。\n\n### 2. `yochiyochi.dx.channel@gmail.com` (自動化・サービスアカウント)\n- **役割:** 自動化プロセスおよびサービス連携の実行主体。AI Co-Pilotが操作する前提のアカウント。\n- **権限・管理リソース:**\n  - **GitHubリポジトリ:**\n    - **リポジトリ名:** `jigyokei-copilot`\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **Owner**。IDX環境からの`git push`認証にこのアカウントのPersonal Access Tokenを使用する。\n  - **Google Apps Script (GAS)プロジェクト:**\n    - **プロジェクト:** 本番実行環境であるGoogle Apps Scriptプロジェクト\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **オーナー**。スクリプトの実行、トリガー管理、およびGitHub ActionsからのCI/CDによるデプロイの受け入れを行う。\n  - **Google Drive:**\n    - **対象:** マスターデータおよびアーカイブが格納されている全フォルダ\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **オーナー**。GASからの全てのファイル読み書きを実行する。\n\n### 3. `hirobrandneo@gmail.com` (個人・レガシーアカウント)\n- **役割:** プロジェクトの公式な開発プロセス外のレガシーアカウント。Google AI Pro (旧Duet AI) を契約しており、Firebase Studioでの本格開発を開始する前の情報資産（各種ドキュメント、初期のコードスニペット等）を管理していた。\n- **権限:** 現在の公式な開発・運用プロセスにおける、いかなる認証・認可にも**関与しない**。今後は新規の情報を追加せず、過去資産の参照用としてのみ保持する。",
+        "impact_how": "この定義により、誰が（どのアカウントが）何をする（できる）のか、そしてどのリソースに紐づくのかが一目瞭然となり、権限エラーの防止、セキュリティリスクの低減、円滑な開発プロセスの維持が可能となる。これは、AIと人間が協業する上での重要なガバナンス基盤となる。"
+      };
+      
+      if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
+      currentLog.decisionLog.logs.push(newLogEntry);
+      currentLog.decisionLog.最終更新日 = timestamp;
+      return currentLog;
+    }
+  }
+};
+
+/**
+ * 💡 この関数を実行してください
+ */
+function runUpdate_FinalizeRolesAndConnections() {
+  applyProjectUpdate(updateConfig_FinalizeRolesAndConnections);
+}
