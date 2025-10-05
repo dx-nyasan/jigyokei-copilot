@@ -30,5 +30,8 @@ jobs:
     - name: Create clasp credentials file
       run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
 
+    - name: '[DEBUG] Display clasp credentials file'
+      run: cat ~/.clasprc.json
+
     - name: Push to Apps Script
       run: clasp push --force
