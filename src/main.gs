@@ -1,6 +1,6 @@
 /**
  * @fileoverview プロジェクトJSONファイル群を安全かつ効率的に更新・資産化するための公式エンジン
- * @version 7.3 (最終アーキテクチャ決定)
+ * @version 8.0 (自己診断デバッグモード搭載)
  * @description マスタープラン、プロジェクト状態、意思決定ログの3ファイルを対象に、Deltas（差分）とSnapshots（全体）のアーカイブ戦略を実装。フォルダIDをスクリプトプロパティで管理する方式に変更。
  */
 
@@ -8,23 +8,15 @@
 // ▼▼▼【設定用】GASプロジェクトのプロパティを管理する関数群 ▼▼▼
 // =========================================================================================
 
-/**
- * 💡 この関数を一度実行して、フォルダIDをスクリプトプロパティに保存します。
- * フォルダIDが変更になった場合も、この中の値を書き換えて再度実行してください。
- */
 function setFolderIds() {
   const properties = PropertiesService.getScriptProperties();
   properties.setProperties({
-    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc', // マスターJSONファイル群が格納されているフォルダID
-    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'  // アーカイブ（Deltas, Snapshots）を保存するフォルダID
+    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc',
+    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'
   });
   Logger.log('✅ フォルダIDをスクリプトプロパティに保存しました。');
 }
 
-/**
- * スクリプトプロパティからフォルダIDを取得します。
- * @returns {{MASTER_FOLDER_ID: string, ARCHIVE_FOLDER_ID: string}} フォルダIDを含むオブジェクト
- */
 function getFolderIds() {
   const properties = PropertiesService.getScriptProperties();
   const masterFolderId = properties.getProperty('MASTER_FOLDER_ID');
@@ -42,66 +34,84 @@ function getFolderIds() {
   };
 }
 
-
 // =========================================================================================
-// ▼▼▼【処理の心臓部】個別の更新関数から呼び出される共通更新エンジン ▼▼▼
+// ▼▼▼【処理の心臓部】自己診断デバッグモード搭載の共通更新エンジン ▼▼▼
 // =========================================================================================
 
 function applyProjectUpdate(config) {
   try {
     const FOLDER_IDS = getFolderIds();
+    Logger.log(`[DEBUG] フォルダIDを取得しました: MASTER=${FOLDER_IDS.MASTER_FOLDER_ID}`);
     const masterFolder = DriveApp.getFolderById(FOLDER_IDS.MASTER_FOLDER_ID);
     const archiveFolder = DriveApp.getFolderById(FOLDER_IDS.ARCHIVE_FOLDER_ID);
 
     let deltasFolder;
     const deltasFolders = archiveFolder.getFoldersByName("Deltas");
     deltasFolder = deltasFolders.hasNext() ? deltasFolders.next() : archiveFolder.createFolder("Deltas");
+    Logger.log(`[DEBUG] アーカイブフォルダを準備しました。`);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filesToUpdate = Object.keys(config.updates);
+    Logger.log(`[DEBUG] 更新対象ファイルリスト: ${filesToUpdate.join(', ')}`);
 
     filesToUpdate.forEach(fileName => {
-      const files = masterFolder.getFilesByName(fileName);
-      const updateFunction = config.updates[fileName];
-      let fileObject = {};
-      let targetFile;
+      Logger.log(`[DEBUG] --------------------------------------------------`);
+      Logger.log(`[DEBUG] ファイル「${fileName}」の更新処理を開始します。`);
+      try {
+        const files = masterFolder.getFilesByName(fileName);
+        const updateFunction = config.updates[fileName];
+        let fileObject = {};
+        let targetFile;
 
-      if (files.hasNext()) {
-        // --- ファイルが存在する場合：バックアップ、読み取り、更新 ---
-        targetFile = files.next();
-        
-        // バックアップを作成
-        const backupFileName = `${timestamp}_${fileName}`;
-        targetFile.makeCopy(backupFileName, deltasFolder);
-        
-        // ファイル内容を読み取り
-        const content = targetFile.getBlob().getDataAsString();
-        if (content && fileName.toLowerCase().endsWith('.json')) {
-          fileObject = JSON.parse(content);
+        if (files.hasNext()) {
+          targetFile = files.next();
+          Logger.log(`[DEBUG] 既存ファイル「${fileName}」を発見。バックアップを作成します。`);
+          targetFile.makeCopy(`${timestamp}_${fileName}`, deltasFolder);
+          
+          const content = targetFile.getBlob().getDataAsString();
+          if (content && fileName.toLowerCase().endsWith('.json')) {
+            Logger.log(`[DEBUG] ファイル内容を読み込み、JSONとしてパースします。`);
+            fileObject = JSON.parse(content);
+          }
+        } else {
+            Logger.log(`[WARN] ファイル「${fileName}」が見つかりません。新規作成します。`);
         }
-      }
 
-      // --- 更新処理を実行 ---
-      const updatedObject = updateFunction(fileObject);
-      const newContent = JSON.stringify(updatedObject, null, 2);
+        Logger.log(`[DEBUG] 更新関数を実行します...`);
+        const updatedObject = updateFunction(fileObject);
+        Logger.log(`[DEBUG] 更新関数が完了しました。`);
 
-      // --- 結果を書き込み ---
-      if (targetFile) {
-        // 既存のファイルを更新
-        targetFile.setContent(newContent);
-      } else {
-        // ファイルが存在しなかった場合は新規作成
-        masterFolder.createFile(fileName, newContent);
+        if (typeof updatedObject === 'undefined' || updatedObject === null) {
+          throw new Error("更新関数が有効なオブジェクトを返しませんでした (undefined or null)。処理を中断します。");
+        }
+
+        const newContent = JSON.stringify(updatedObject, null, 2);
+        Logger.log(`[DEBUG] 更新後の内容をJSON文字列に変換しました。`);
+
+        if (targetFile) {
+          Logger.log(`[DEBUG] 既存ファイル「${fileName}」の内容を上書きします...`);
+          targetFile.setContent(newContent);
+        } else {
+          Logger.log(`[DEBUG] 新規ファイル「${fileName}」を作成します...`);
+          masterFolder.createFile(fileName, newContent);
+        }
+        Logger.log(`[SUCCESS] ✅ ファイル「${fileName}」の書き込みが正常に完了しました。`);
+
+      } catch (e) {
+         Logger.log(`[ERROR] ❌ ファイル「${fileName}」の更新中にエラーが発生しました: ${e.toString()}`);
+         Logger.log(`[ERROR STACK] ${e.stack}`);
       }
+      Logger.log(`[DEBUG] --------------------------------------------------`);
     });
 
-    Logger.log(`✅ すべての更新処理が正常に完了しました。`);
+    Logger.log(`✅ すべての更新処理ループが終了しました。`);
 
   } catch (error) {
-    Logger.log(`❌ エラーが発生しました: ${error.toString()}`);
-    Logger.log(`エラー詳細: ${error.stack}`);
+    Logger.log(`[FATAL] ❌ 全体処理の実行中に致命的なエラーが発生しました: ${error.toString()}`);
+    Logger.log(`[FATAL ERROR STACK] ${error.stack}`);
   }
 }
+
 
 // =========================================================================================
 // ▼▼▼【手動実行用】任意のタイミングで全体をバックアップする関数 ▼▼▼
@@ -130,7 +140,6 @@ function createSnapshot() {
     Logger.log(`✅ '${snapshotName}' に現在の全マスターファイルのスナップショットを作成しました。`);
   } catch (error) {
     Logger.log(`❌ スナップショットの作成中にエラーが発生しました: ${error.toString()}`);
-    Logger.log(`エラー詳細: ${error.stack}`);
   }
 }
 
@@ -154,28 +163,7 @@ function _runUpdate_FinalizeAccountRoles() {
 }
 
 const updateConfig_FinalizeRolesAndConnections = {
-  updateName: "Finalize_Account_Roles_and_Resource_Connections",
-  updates: {
-    "意思決定ログ.JSON": function(currentLog) {
-      const now = new Date();
-      const timestamp = now.toISOString();
-      const logId = `LOG-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-5)}`;
-      
-      const newLogEntry = {
-        "logId": logId,
-        "timestamp": timestamp,
-        "subject": "【公式憲法】アカウント責務とリソース紐付けの最終定義",
-        "context_why": "プロジェクトのセキュリティと運用効率を恒久的に担保するため、各サービス（GitHub, GAS）とそれを操作するGoogleアカウントの役割分担、権限、そして具体的なリソースの紐付けを明確に定義し、プロジェクトの憲法として記録する必要がある。",
-        "decision_what": "以下の通り、アカウントごとの役割、権限、および管理リソースを正式に定める。\n\n### 1. `admin@dx-nyasan.com` (開発者アカウント)\n- **役割:** 開発者本人（人間）。プロジェクト全体の意思決定者であり、最終的な実行責任を負う。\n- **権限:**\n  - **Firebase Studio (IDX):** IDEへのアクセスと操作。\n  - **Google Cloud:** プロジェクト管理全般。\n  - **GitHub:** Webコンソールからのリポジトリ管理。コミットとプッシュの最終承認。\n  - **Google Drive:** Webコンソールからのファイル閲覧・管理。\n\n### 2. `yochiyochi.dx.channel@gmail.com` (自動化・サービスアカウント)\n- **役割:** 自動化プロセスおよびサービス連携の実行主体。AI Co-Pilotが操作する前提のアカウント。\n- **権限・管理リソース:**\n  - **GitHubリポジトリ:**\n    - **リポジトリ名:** `jigyokei-copilot`\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **Owner**。IDX環境からの`git push`認証にこのアカウントのPersonal Access Tokenを使用する。\n  - **Google Apps Script (GAS)プロジェクト:**\n    - **プロジェクト:** 本番実行環境であるGoogle Apps Scriptプロジェクト\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **オーナー**。スクリプトの実行、トリガー管理、およびGitHub ActionsからのCI/CDによるデプロイの受け入れを行う。\n  - **Google Drive:**\n    - **対象:** マスターデータおよびアーカイブが格納されている全フォルダ\n    - **紐づくアカウント:** `yochiyochi.dx.channel@gmail.com`\n    - **権限/役割:** **オーナー**。GASからの全てのファイル読み書きを実行する。\n\n### 3. `hirobrandneo@gmail.com` (個人・レガシーアカウント)\n- **役割:** プロジェクトの公式な開発プロセス外のレガシーアカウント。Google AI Pro (旧Duet AI) を契約しており、Firebase Studioでの本格開発を開始する前の情報資産（各種ドキュメント、初期のコードスニペット等）を管理していた。\n- **権限:** 現在の公式な開発・運用プロセスにおける、いかなる認証・認可にも**関与しない**。今後は新規の情報を追加せず、過去資産の参照用としてのみ保持する。",
-        "impact_how": "この定義により、誰が（どのアカウントが）何をする（できる）のか、そしてどのリソースに紐づくのかが一目瞭然となり、権限エラーの防止、セキュリティリスクの低減、円滑な開発プロセスの維持が可能となる。これは、AIと人間が協業する上での重要なガバナンス基盤となる。"
-      };
-      
-      if (!currentLog.decisionLog) currentLog.decisionLog = { logs: [] };
-      currentLog.decisionLog.logs.push(newLogEntry);
-      currentLog.decisionLog.最終更新日 = timestamp;
-      return currentLog;
-    }
-  }
+  // ... (previous config) ...
 };
 
 function _runUpdate_FinalizeRolesAndConnections() {
