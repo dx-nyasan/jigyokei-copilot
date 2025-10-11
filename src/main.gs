@@ -13,16 +13,16 @@
 function setFolderIds() {
   const properties = PropertiesService.getScriptProperties();
   properties.setProperties({
-    \'MASTER_FOLDER_ID\': \'1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc\', // マスターJSONファイル群が格納されているフォルダID
-    \'ARCHIVE_FOLDER_ID\': \'1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw\'  // アーカイブ（Deltas, Snapshots）を保存するフォルダID
+    'MASTER_FOLDER_ID': '1EPkPvug2qTwfjxuyIAFRLWoTtXk9jZrc', // マスターJSONファイル群が格納されているフォルダID
+    'ARCHIVE_FOLDER_ID': '1463itoS4sLl-60gxCJgafOlPfdI1ZEnbw'  // アーカイブ（Deltas, Snapshots）を保存するフォルダID
   });
   Logger.log('✅ フォルダIDをスクリプトプロパティに保存しました。');
 }
 
 function getFolderIds() {
   const properties = PropertiesService.getScriptProperties();
-  const masterFolderId = properties.getProperty(\'MASTER_FOLDER_ID\');
-  const archiveFolderId = properties.getProperty(\'ARCHIVE_FOLDER_ID\');
+  const masterFolderId = properties.getProperty('MASTER_FOLDER_ID');
+  const archiveFolderId = properties.getProperty('ARCHIVE_FOLDER_ID');
   
   if (!masterFolderId || !archiveFolderId) {
     const message = '❌ スクリプトプロパティにフォルダIDが設定されていません。「setFolderIds」関数を実行して、IDを設定してください。';
