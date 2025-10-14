@@ -1,0 +1,32 @@
+{
+  "human_accounts": [
+    {
+      "id": "admin@dx-nyasan.com",
+      "nickname": "【立法】オーナーアカウント",
+      "primary_usage": "IDEでの最終承認、GCPコンソールの操作、ブラウザでの成果物確認",
+      "notes": "プロジェクトの最高責任者であるオーナー（人間）が使用するメインアカウント。全ての意思決定とリソース所有権を担う。『立法府』に相当する。"
+    }
+  ],
+  "bot_service_accounts": [
+    {
+      "id": "github-actions-deployer@...(推定)",
+      "nickname": "【行政府】自動デプロイアカウント",
+      "primary_usage": "GitHub ActionsによるGASプロジェクトへの自動デプロイ",
+      "notes": "IDEからPushされたコードを本番環境に反映する唯一の公式な実行アカウント。『行政府』に相当する。GASプロジェクトの『編集者』権限を持つ。"
+    },
+    {
+      "id": "yochiyochi.dx.channel@gmail.com",
+      "nickname": "【司法】AIアシスタントアカウント",
+      "primary_usage": "IDE内部での対話、コード生成、ファイル操作、CLIの補助実行",
+      "notes": "オーナーを補助するAIアシスタントが使用する対話用ID。『司法府』に相当する。本番環境へのアクセス権限は意図的に付与されておらず、デプロイには一切関与しない。"
+    }
+  ],
+  "legacy_accounts": [
+    {
+      "id": "hirobrandneo@gmail.com",
+      "nickname": "旧・個人アーカイブアカウント",
+      "primary_usage": "過去のドキュメント参照のみ",
+      "notes": "プロジェクト初期に使用されたレガシーアカウント。現在の公式な開発・認証プロセスには一切関与しません。"
+    }
+  ]
+}

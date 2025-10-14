@@ -1,0 +1,14 @@
+{
+  "project": "Digital Genesis Block",
+  "archived_at": "2025-10-05T14:05:57Z",
+  "historical_context": "This is the Genesis Block of the 'AI Co-Pilot' project, representing the initial collaboration between the human developer (admin@dx-nyasan.com) and the AI assistant. It contains the foundational narrative (the original deployment idea) and the technical artifacts (the initial Google Apps Script code) that started this journey. This archive marks the successful completion of the first joint project: 'Assetization of Experience and Construction of a Perpetual Storage System'.",
+  "contents": {
+    "narrative": [
+      "deploy.yml.archived"
+    ],
+    "artifacts": [
+      "appsscript.json",
+      "gas_project/"
+    ]
+  }
+}

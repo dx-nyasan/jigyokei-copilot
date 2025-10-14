@@ -32,45 +32,15 @@
           }
         ]
       },
-      "foundation": "この高度なアーキテクチャの実現に向けた絶対的な第一歩が、先日実施した『AIの沈黙化（Strict JSON-RPCの徹底）』である。各AIコンポーネントが100%信頼性のあるJSONを交換できるようになったことで、初めてこの複雑な連携システムを構築する道が開かれた。",
-      "components": [
-        {
-          "name": "会話状態JSON (Session State)",
-          "purpose": "『今、何のテーマについて話しているか』という短期的な対話の文脈を保持する。",
-          "status": "設計完了・実装済み"
-        }
-      ]
+      "foundation": "この高度なアーキテクチャの実現に向けた絶対的な第一歩が、先日実施した『AIの沈黙化（Strict JSON-RPCの徹底）』である。各AIコンポーネントが100%信頼性のあるJSONを交換できるようになったことで、初めてこの複雑な連携システムを構築する道が開かれた。"
     }
   },
-  "version": "4.0",
+  "version": "3.0",
   "creationDate": "2025-09-11",
   "collaborationModel": {
-    "title": "プロジェクトの統治モデルと協業ワークフロー",
-    "constitution": "このマスタープランJSONファイルは、本プロジェクトの『憲法』である。すべての開発はこのファイルに基づいて行われる。",
-    "governanceModel": {
-      "title": "【確定】三権分立による統治モデル",
-      "description": "本プロジェクトの安全性と開発効率を担保するため、権力分立の原則に基づき、役割と責任を厳格に分離する。これは、人間、AI、自動化システム間の責任範囲を明確にし、ヒューマンエラーや権限の濫用を防ぐための最重要原則である。",
-      "branches": [
-        {
-          "branch": "【立法府】オーナー (Legislative Branch: Human Owner)",
-          "entity": "人間 (admin@dx-nyasan.com)",
-          "perspective": "ブラウザ(GUI) / IDE",
-          "responsibility": "プロジェクトに関する全ての意思決定を行う唯一の最高権力者。AIからの提案を承認または却下し、プロジェクトの最終的な方向性を決定する。GASプロジェクトの『オーナー』権限を保持する。"
-        },
-        {
-          "branch": "【行政府】自動化パイプライン (Executive Branch: Automation Pipeline)",
-          "entity": "機械 (GitHub Actions)",
-          "perspective": "API / CLI (as part of automated workflow)",
-          "responsibility": "IDEからGitリポジトリへPushされたコードを、本番環境(GAS)へ自動的にデプロイする唯一の公式な実行機関。GASプロジェクトの『編集者』権限を保持する。"
-        },
-        {
-          "branch": "【司法府】AIアシスタント (Judicial Branch: AI Assistant)",
-          "entity": "AI (yochiyochi.dx.channel@gmail.com)",
-          "perspective": "IDEターミナル (CLI) / API",
-          "responsibility": "IDE内部における、オーナーの補助、助言、およびコード生成に特化した支援役。本番環境へのいかなるアクセス権限も意図的に保持せず、デプロイプロセスには一切関与しない。"
-        }
-      ]
-    }
+    "title": "プロジェクトの憲法と協業ワークフロー",
+    "constitution": "このマスタープランJSONファイルは、本プロジェクトの『憲法』である。すべての開発はこのファイルに基づいて行われる。チャットルームやセッションが変わっても、この最新版ファイルを共有することで、一貫した開発スタイルとコンテキストが維持される。",
+    "geminiRole": "Googleで最も優秀な社員であり、Googleサービス群の組み合わせ提案および細かなボタン操作知識が最高レベルの『伴走支援者』として、プロジェクトオーナーをサポートする。"
   },
   "geminiPromptTemplates": {
     "instruction": "次の開発に進む際は、このJSONファイルを添付した上で、『JSON計画書の次期開発ブロックについて、テンプレートを参考に最適なプロンプトを生成してください』と指示するだけで良い。GeminiがJSONから次に開発すべきブロックを特定し、以下のプロンプト例を基に最適化された提案を開始する。",
@@ -97,8 +67,7 @@
         "priority": 1,
         "name": "AI思考エンジン (Backend API on Cloud Run)",
         "description": "会話ログを分析し、リスクと解決策をJSON形式で返すAPI。思考プロセスは信頼性向上のため『リスク抽出』と『解決策マッピング』の2段階で構成される。",
-        "status": "完了",
-        "endpointURL": "https://jigyokei-copilot-backend-310523847405.asia-northeast2.run.app"
+        "status": "完了"
       },
       {
         "priority": 2,
@@ -121,10 +90,6 @@
     ],
     "principles": [
       {
-        "principleName": "【最高原則】IDEこそが正義、デプロイはGitに委ねよ (IDE is Truth, Git is Law)",
-        "description": "手動でのデプロイコマンド(clasp push等)や、ブラウザ上での直接コード編集が引き起こした数多の苦難の末、我々は『人間系の曖昧さを完全に排除した厳格なワークフロー』に到達した。これが本プロジェクトの永続的な安定性を担保する最高原則である。1.【IDEが正】全てのコードは、ローカルのIDEを唯一の『正』とする。 2.【Gitが法】IDEで編集されたコードは、必ずGitにコミット＆プッシュされなければならない。 3.【CI/CDが執行】Gitへのプッシュをトリガーとして、GitHub Actionsが自動的にテストとデプロイを実行する。この『Push to Deploy』以外の方法で本番コードが変更されることは、理由の如何を問わず、絶対に許されない。"
-      },
-      {
         "principleName": "厳格なJSON通信プロトコル (Strict JSON-RPC)",
         "description": "システム内のコンポーネント間、特にAIと思考エンジン間の通信は、純粋なJSON形式に厳格に規定される。AIによる挨拶や自然言語の補足説明などの『ノイズ』はプロトコルレベルで完全に排除し、100%の機械可読性を保証する。これは、将来的に『会話状態JSON』などが連携する高度なステートフルAIアーキテクチャを構築するための、絶対に譲れない基礎原則である。"
       },
@@ -135,22 +100,6 @@
       {
         "principleName": "AIアシスタントへの委任と直接実行の原則 (Principle of AI Delegation and Direct Execution)",
         "description": "開発プロセスを高速化するため、AIアシスタントとの役割分担を明確化する。AIが自身の権限で実行可能な操作（例: gcloudコマンドによる権限付与）については、オーナーに手順を説明させるのではなく、『私が実行しましょうか？』と提案させ、許可を得て直接実行させる。オーナーは、AIには実行不可能な操作（例: GUIでのキー生成、最終的な意思決定）に集中する。これにより、トライ＆エラーのサイクルを劇的に短縮し、開発の停滞を未然に防ぐ。"
-      },
-      {
-        "principleName": "GAS更新関数のアーカイブ原則 (GAS Update Function Archiving Principle)",
-        "description": "GASの実行メニューには常に最新のタスクのみを表示させるための厳格なルール。実行済みのrunUpdate関数は、関数名の先頭にアンダースコア「_」を付けてアーカイブし、実行メニューから非表示にする。これにより、オペレーションミスを根絶し、開発の安全性を確保する。"
-      },
-      {
-        "principleName": "AI協業におけるコード生成の原則 (AI Code Generation Principle)",
-        "description": "AIアシスタントがGASコードを生成する際は、常に「新しく追加するブロック」のみを出力する。ユーザーはそれをスクリプトの末尾に追記するだけで作業が完了する。これにより、コード編集の複雑さとAIの出力量を最小限に抑える。"
-      },
-      {
-        "principleName": "【AI自己規律原則】ファイル編集の権限分離 (AI Self-Discipline: Separation of File Editing Permissions)",
-        "description": "プロジェクトの安全性と開発の機動性を両立させるため、AIによるファイル編集権限を明確に分離する。README.mdはAIによる直接編集を許可し、機動性を確保する。一方、プロジェクトの状態を定義する全ての.jsonファイルは、AIによる直接編集を厳格に禁止し、必ずGASの更新プロセスを経由することで、安全性と追跡可能性を保証する。この権限分離は、AIとの協業における最適なワークフローを定義するものである。"
-      },
-      {
-        "principleName": "【鉄則】CLI認証コンテキストの相互確認原則 (CLI Authentication Context Mutual Confirmation)",
-        "description": "外部サービスと連携する全てのコマンドラインインターフェース（CLI）ツールの実行前、操作主体（AI）は、現在認証されているアカウント（例：`yochiyochi.dx.channel@gmail.com`）を明示し、確認主体（人間）がブラウザで想定しているアカウントと一致しているかを必ず相互確認する。これは、CLIの認証主体とGUIの確認主体が異なることに起因する、致命的なデプロイ事故や混乱を永久に撲滅するための、血をもって学んだ最重要安全規律である。"
       }
     ]
   },
@@ -172,11 +121,10 @@
     },
     {
       "phase": 2,
-      "title": "【進行中】データベースとGUIの連携開発フェーズ",
-      "status": "進行中",
+      "title": "【計画中】データベースとGUIの連携開発フェーズ",
+      "status": "計画中",
       "objective": "Firestoreデータベースを構築し、AppSheetで作成したGUIプロトタイプとバックエンドAPIを連携させ、一気通貫で動作するアプリケーションの初期版を完成させる。",
       "keyActivities": [
-        "厳格なCI/CDパイプラインの構築と有効化",
         "Firestoreデータベースの設計と構築",
         "AppSheetを用いたGUIプロトタイプの作成",
         "AppSheetからCloud Run APIを呼び出す連携設定",
@@ -205,5 +153,5 @@
       "effectAndOutcome": "システムの有効性が実務レベルで証明され、より現場で役立つツールへと進化させるための具体的な指針が得られる。"
     }
   ],
-  "lastModified": "2025-10-12T03:00:00.000Z"
+  "lastModified": "2025-10-04T03:03:40.064Z"
 }
