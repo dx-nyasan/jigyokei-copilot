@@ -20,20 +20,16 @@
 
 アカウントの詳細な定義については、[`_reference_assets/アカウントリスト.JSON`](_reference_assets/アカウントリスト.JSON)を参照してください。
 
-### 2.1.【確定】権限モデルと開発ワークフロー
+### 2.1. A2A（Agent-to-Agent）開発モデルとアーキテクチャ
 
-上記役割分担に基づき、2025年10月24日時点での公式な権限モデルと開発フローを以下のように確定する。
+本プロジェクトの開発は、人間と複数のAIエージェントが協調して自律的な開発サイクルを構築する**A2A（Agent-to-Agent）開発モデル**に基づき、Google Cloud Platformの各種サービスを連携させて進められます。
 
-*   **オーナー（人間）:** Google Apps Scriptプロジェクトの「オーナー」権限を保持し、Cloud Workstations上のIDEを通じて開発を主導する。
-*   **自動化パイプライン（GitHub Actions）:** Google Apps Scriptプロジェクトの「編集者」権限を保持し、GitへのPushをトリガーとした自動デプロイを担う。
-*   **Cloud Workstationsサービスアカウント:** Cloud WorkstationsのVMに割り当てられ、GCPリソース（Cloud Runへのデプロイ、Firestoreへのアクセスなど）へのアクセスを担う。GASプロジェクトへの直接的な権限は持たず、GitHub Actionsを通じてデプロイされる。
-*   **AIエージェント群（司令塔AI / 専門AI）:** Cloud Workstations上のIDE/CLI/APIを通じてオーナーの開発を補助する。Google Apps Scriptプロジェクトへの**いかなる権限も保持しない。**
+*   **司令塔AIエージェント（Cloud Functions）**が、人間からの指示を解釈・委任します。
+*   **専門AIエージェント（Cloud Run, Cloud Functions）**が、リスク分析や情報収集といった専門タスクを実行します。
 
-これにより、以下のゴールデンルール（黄金の鉄則）が確立される。
+各エージェントの具体的な役割と連携プロトコルについては、以下のドキュメントを参照してください。
 
-1.  **IDEが正:** 全てのコードは、Cloud Workstations上のIDE（ローカル環境）を唯一の「正」とする。
-2.  **GAS直接編集の禁止:** Google Apps Scriptエディタ上での直接的なコード編集は、理由の如何を問わず、固く禁止する。
-3.  **Push to Deploy:** Cloud Workstations上のIDEでのコード変更は、必ず `git push` を通じて自動化パイプラインに委ねられ、本番環境へ反映されなければならない。
+*   [`AGENT.MD`](AGENT.MD)
 
 ## 3. 行動規範
 
@@ -43,6 +39,9 @@ AI Co-Pilotとの円滑な協業のため、以下の行動規範を定めてい
 
 ## 4. 開発の記録
 
-過去の主要な意思決定や、苦闘の記録は以下のログにまとめられています。
+過去の主要な意思決定や、現在進行中の開発計画は以下のドキュメントにまとめられています。
 
-*   [`_reference_assets/意思決定ログ.JSON`](_reference_assets/意思決定ログ.JSON)
+*   **マスタープラン:** [`_reference_assets/マスタープラン.JSON`](_reference_assets/マスタープラン.JSON)
+*   **意思決定ログ:** [`_reference_assets/意思決定ログ.JSON`](_reference_assets/意思決定ログ.JSON)
+*   **A2A開発計画:** [`A2A開発計画_20251024.md`](A2A開発計画_20251024.md)
+*   **A2A開発シミュレーション:** [`A2A開発シミュレーション結果_20251024.md`](A2A開発シミュレーション結果_20251024.md)
