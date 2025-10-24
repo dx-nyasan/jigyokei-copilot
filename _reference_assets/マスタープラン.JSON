@@ -42,32 +42,32 @@
       ]
     }
   },
-  "version": "4.0",
+  "version": "4.1",
   "creationDate": "2025-09-11",
   "collaborationModel": {
     "title": "プロジェクトの統治モデルと協業ワークフロー",
     "constitution": "このマスタープランJSONファイルは、本プロジェクトの『憲法』である。すべての開発はこのファイルに基づいて行われる。",
     "governanceModel": {
-      "title": "【確定】三権分立による統治モデル",
-      "description": "本プロジェクトの安全性と開発効率を担保するため、権力分立の原則に基づき、役割と責任を厳格に分離する。これは、人間、AI、自動化システム間の責任範囲を明確にし、ヒューマンエラーや権限の濫用を防ぐための最重要原則である。",
+      "title": "【確定】三権分立による統治モデル (Cloud Workstations対応版)",
+      "description": "本プロジェクトの安全性と開発効率を担保するため、権力分立の原則に基づき、役割と責任を厳格に分離する。これは、人間、AI、自動化システム間の責任範囲を明確にし、ヒューマンエラーや権限の濫用を防ぐための最重要原則である。Cloud Workstationsの導入により、開発環境の権限管理が大幅に簡素化される。",
       "branches": [
         {
           "branch": "【立法府】オーナー (Legislative Branch: Human Owner)",
           "entity": "人間 (admin@dx-nyasan.com)",
-          "perspective": "ブラウザ(GUI) / IDE",
+          "perspective": "ブラウザ(GUI) / Cloud Workstations上のIDE",
           "responsibility": "プロジェクトに関する全ての意思決定を行う唯一の最高権力者。AIからの提案を承認または却下し、プロジェクトの最終的な方向性を決定する。GASプロジェクトの『オーナー』権限を保持する。"
         },
         {
           "branch": "【行政府】自動化パイプライン (Executive Branch: Automation Pipeline)",
-          "entity": "機械 (GitHub Actions)",
-          "perspective": "API / CLI (as part of automated workflow)",
-          "responsibility": "IDEからGitリポジトリへPushされたコードを、本番環境(GAS)へ自動的にデプロイする唯一の公式な実行機関。GASプロジェクトの『編集者』権限を保持する。"
+          "entity": "機械 (GitHub Actions / Cloud Workstationsサービスアカウント)",
+          "perspective": "API / CLI (as part of automated workflow & Cloud Workstations)",
+          "responsibility": "IDEからGitリポジリへPushされたコードを本番環境(GAS)へ自動的にデプロイする唯一の公式な実行機関。また、Cloud WorkstationsのVMに割り当てられたサービスアカウントが、GCPリソースへのアクセス（Cloud Runへのデプロイ、Firestoreへの読み書きなど）を担う。GASプロジェクトの『編集者』権限を保持する。"
         },
         {
-          "branch": "【司法府】AIアシスタント (Judicial Branch: AI Assistant)",
-          "entity": "AI (yochiyochi.dx.channel@gmail.com)",
-          "perspective": "IDEターミナル (CLI) / API",
-          "responsibility": "IDE内部における、オーナーの補助、助言、およびコード生成に特化した支援役。本番環境へのいかなるアクセス権限も意図的に保持せず、デプロイプロセスには一切関与しない。"
+          "branch": "【司法府】AIエージェント群 (Judicial Branch: AI Agents)",
+          "entity": "AI (司令塔AI / 専門AI)",
+          "perspective": "Cloud Workstations上のIDEターミナル (CLI) / API",
+          "responsibility": "IDE内部における、オーナーの補助、助言、およびコード生成に特化した支援役。司令塔AIはオーナーからの指示を解釈し、専門AIにタスクを委任する。本番環境へのいかなるアクセス権限も意図的に保持せず、デプロイプロセスには一切関与しない。"
         }
       ]
     }
@@ -94,35 +94,60 @@
     "analogy": "システム全体を『ドライブスルー付きのレストラン』に例える。GUIアプリが『店舗レジ』、Cloud Run APIが『受付窓口兼厨房』、AIエンジンが『凄腕シェフ』、Firestoreが『食材倉庫』として機能する。",
     "functionalBlocks": [
       {
+        "priority": 0,
+        "name": "開発環境 (IDE)",
+        "description": "Cloud Workstations上に構築された、VS Code/JetBrainsといった本格的なIDE。高性能な開発環境をブラウザからどこでも利用でき、権限管理もサービスアカウントに集約される。",
+        "service": "Cloud Workstations",
+        "status": "新規導入"
+      },
+      {
         "priority": 1,
         "name": "AI思考エンジン (Backend API on Cloud Run)",
         "description": "会話ログを分析し、リスクと解決策をJSON形式で返すAPI。思考プロセスは信頼性向上のため『リスク抽出』と『解決策マッピング』の2段階で構成される。",
+        "service": "Cloud Run (FastAPI/Python)",
         "status": "完了",
         "endpointURL": "https://jigyokei-copilot-backend-310523847405.asia-northeast2.run.app"
       },
       {
         "priority": 2,
-        "name": "会話ログ・データベース (Firestore)",
-        "description": "面談セッションごとの会話ログ、AIの分析結果、職員のフィードバックなどを永続的に保存・管理する。将来的には『継続的学習エンジン』のデータソースとなる。",
-        "status": "計画中"
+        "name": "エージェント機能強化",
+        "description": "「記憶を持つAI」のロジック開発に活用し、高性能なエージェント連携を実現する。司令塔AIと専門AIの連携基盤となる。",
+        "service": "Vertex AI (Agent Builder / Gemini API)",
+        "status": "新規導入"
       },
       {
         "priority": 3,
-        "name": "統合インターフェース (GUI on AppSheet)",
-        "description": "職員が現場で利用するタブレット用アプリケーション。リアルタイム議事録、デュアルカウンター、ダイナミック・インサイトパネルなどの機能を持ち、FirestoreとCloud Run APIと連携して動作する。",
+        "name": "会話ログ・データベース (Firestore)",
+        "description": "面談セッションごとの会話ログ、AIの分析結果、職員のフィードバックなどを永続的に保存・管理する。将来的には『継続的学習エンジン』のデータソースとなる。",
+        "service": "Firestore",
         "status": "計画中"
       },
       {
         "priority": 4,
+        "name": "統合インターフェース (GUI on AppSheet)",
+        "description": "職員が現場で利用するタブレット用アプリケーション。リアルタイム議事録、デュアルカウンター、ダイナミック・インサイトパネルなどの機能を持ち、FirestoreとCloud Run APIと連携して動作する。",
+        "service": "AppSheet",
+        "status": "計画中"
+      },
+      {
+        "priority": 5,
+        "name": "コード管理",
+        "description": "全てのコードをバージョン管理し、CI/CDの基盤とする。",
+        "service": "GitHub",
+        "status": "新規導入"
+      },
+      {
+        "priority": 6,
         "name": "継続的学習エンジン (Future Plan)",
         "description": "Firestoreに蓄積された実際の面談データと、職員が最終的に作成した計画書（成功データ）を学習し、AI思考エンジンの精度を継続的に向上させる仕組み。",
+        "service": "Vertex AI (Future Plan)",
         "status": "計画中"
       }
     ],
     "principles": [
       {
         "principleName": "【最高原則】IDEこそが正義、デプロイはGitに委ねよ (IDE is Truth, Git is Law)",
-        "description": "手動でのデプロイコマンド(clasp push等)や、ブラウザ上での直接コード編集が引き起こした数多の苦難の末、我々は『人間系の曖昧さを完全に排除した厳格なワークフロー』に到達した。これが本プロジェクトの永続的な安定性を担保する最高原則である。1.【IDEが正】全てのコードは、ローカルのIDEを唯一の『正』とする。 2.【Gitが法】IDEで編集されたコードは、必ずGitにコミット＆プッシュされなければならない。 3.【CI/CDが執行】Gitへのプッシュをトリガーとして、GitHub Actionsが自動的にテストとデプロイを実行する。この『Push to Deploy』以外の方法で本番コードが変更されることは、理由の如何を問わず、絶対に許されない。"
+        "description": "手動でのデプロイコマンド(clasp push等)や、ブラウザ上での直接コード編集が引き起こした数多の苦難の末、我々は『人間系の曖昧さを完全に排除した厳格なワークフロー』に到達した。これが本プロジェクトの永続的な安定性を担保する最高原則である。1.【IDEが正】全てのコードは、Cloud Workstations上のIDEを唯一の『正』とする。 2.【Gitが法】IDEで編集されたコードは、必ずGitにコミット＆プッシュされなければならない。 3.【CI/CDが執行】Gitへのプッシュをトリガーとして、GitHub Actionsが自動的にテストとデプロイを実行する。この『Push to Deploy』以外の方法で本番コードが変更されることは、理由の如何を問わず、絶対に許されない。"
       },
       {
         "principleName": "厳格なJSON通信プロトコル (Strict JSON-RPC)",
@@ -133,8 +158,8 @@
         "description": "環境構築やシステム連携において、不確実性に起因する『手戻り』を撲滅するための行動原則。第一に、最もシンプルで慣習的な方法を試す。しかし、それで少しでも原因不明の遅延やトラブルが発生した場合、直ちにそのアプローチを破棄する。第二に、中間的な抽象レイヤー（例: 起動スクリプト）を積極的に疑い、それを排除する。そして、より本質的な設定ファイル（例: .idx/dev.nix）を直接編集し、一切の曖昧さを含まない直接的なコマンドでシステムを制御する。この『まずシンプルに、ダメなら即、直接制御』という思考は、開発の初期段階で時間を浪費することを防ぎ、プロジェクト全体の効率を最大化する。"
       },
       {
-        "principleName": "AIアシスタントへの委任と直接実行の原則 (Principle of AI Delegation and Direct Execution)",
-        "description": "開発プロセスを高速化するため、AIアシスタントとの役割分担を明確化する。AIが自身の権限で実行可能な操作（例: gcloudコマンドによる権限付与）については、オーナーに手順を説明させるのではなく、『私が実行しましょうか？』と提案させ、許可を得て直接実行させる。オーナーは、AIには実行不可能な操作（例: GUIでのキー生成、最終的な意思決定）に集中する。これにより、トライ＆エラーのサイクルを劇的に短縮し、開発の停滞を未然に防ぐ。"
+        "principleName": "AIエージェント群への委任とサービスアカウント実行の原則 (Principle of AI Delegation and Service Account Execution)",
+        "description": "開発プロセスを高速化するため、AIエージェント群との役割分担を明確化する。司令塔AIはオーナーからの指示を解釈し、最適な専門AIにタスクを委任する。専門AIが自身の権限で実行可能な操作（例: gcloudコマンドによる権限付与、Cloud Runへのデプロイ、Firestoreへの読み書き）については、Cloud Workstationsに割り当てられたサービスアカウントの権限を用いて直接実行する。オーナーは、AIには実行不可能な操作（例: GUIでのキー生成、最終的な意思決定）に集中する。これにより、トライ＆エラーのサイクルを劇的に短縮し、開発の停滞を未然に防ぐ。"
       },
       {
         "principleName": "GAS更新関数のアーカイブ原則 (GAS Update Function Archiving Principle)",
@@ -149,8 +174,8 @@
         "description": "プロジェクトの安全性と開発の機動性を両立させるため、AIによるファイル編集権限を明確に分離する。README.mdはAIによる直接編集を許可し、機動性を確保する。一方、プロジェクトの状態を定義する全ての.jsonファイルは、AIによる直接編集を厳格に禁止し、必ずGASの更新プロセスを経由することで、安全性と追跡可能性を保証する。この権限分離は、AIとの協業における最適なワークフローを定義するものである。"
       },
       {
-        "principleName": "【鉄則】CLI認証コンテキストの相互確認原則 (CLI Authentication Context Mutual Confirmation)",
-        "description": "外部サービスと連携する全てのコマンドラインインターフェース（CLI）ツールの実行前、操作主体（AI）は、現在認証されているアカウント（例：`yochiyochi.dx.channel@gmail.com`）を明示し、確認主体（人間）がブラウザで想定しているアカウントと一致しているかを必ず相互確認する。これは、CLIの認証主体とGUIの確認主体が異なることに起因する、致命的なデプロイ事故や混乱を永久に撲滅するための、血をもって学んだ最重要安全規律である。"
+        "principleName": "【鉄則】Cloud Workstationsサービスアカウント認証の原則 (Cloud Workstations Service Account Authentication Principle)",
+        "description": "Cloud Workstations環境では、開発者個人の認証情報ではなく、VMに割り当てられたサービスアカウントがGCPリソースへのアクセス主体となる。これにより、ローカルPCでの認証情報の管理が不要となり、権限問題を最小限に抑える。AIエージェント群は、このサービスアカウントの権限を最大限に活用し、GCPリソースへの操作をシームレスに実行する。"
       }
     ]
   },
@@ -172,37 +197,42 @@
     },
     {
       "phase": 2,
-      "title": "【進行中】データベースとGUIの連携開発フェーズ",
+      "title": "【進行中】開発環境と連携基盤の構築フェーズ",
       "status": "進行中",
-      "objective": "Firestoreデータベースを構築し、AppSheetで作成したGUIプロトタイプとバックエンドAPIを連携させ、一気通貫で動作するアプリケーションの初期版を完成させる。",
+      "objective": "Cloud Workstations上に開発環境を構築し、GitHub連携、Firestoreデータベースの設計、GUIプロトタイプの開発着手、およびWorkstationsからのAPI呼び出しテストを実施し、次期開発ブロックへの迅速な移行を可能にする。",
       "keyActivities": [
-        "厳格なCI/CDパイプラインの構築と有効化",
-        "Firestoreデータベースの設計と構築",
-        "AppSheetを用いたGUIプロトタイプの作成",
-        "AppSheetからCloud Run APIを呼び出す連携設定",
-        "FirestoreとAppSheet/Cloud Runのデータ連携設定"
+        "Cloud Workstations環境構築（VS Code含む開発環境セットアップ、権限付与サービスアカウント割り当て）",
+        "GitHub連携と初期クローン（WorkstationsからGitHubリポジトリへのアクセス、プロジェクトコードクローン）",
+        "Firestoreデータベースの設計と構築（会話ログ・データベースの設計と初期セットアップ）",
+        "GUIプロトタイプの開発着手（AppSheetを用いたGUIプロトタイプ（入力・一覧画面）の開発着手）",
+        "WorkstationsからのAPI呼び出しテスト（Workstations環境から、既存のCloud Run APIエンドポイントへのデータ送受信テスト実施、環境の安定性確保）"
       ],
       "deliverables": [
-        "操作可能なAppSheetアプリケーションのプロトタイプ",
-        "会話ログが保存されるFirestoreデータベース"
+        "Cloud Workstations上の開発環境",
+        "GitHubからクローンされたプロジェクトコード",
+        "Firestoreデータベースの初期設計",
+        "AppSheet GUIプロトタイプ（入力・一覧画面）"
       ],
-      "effectAndOutcome": "初めて、職員が実際に触って操作でき、かつデータが保存されるアプリケーションが完成する。"
+      "effectAndOutcome": "PC依存を解消し、権限問題を最小限に抑えた安定した開発環境が確立され、次期開発ブロックへのスムーズな移行が可能となる。"
     },
     {
       "phase": 3,
-      "title": "【計画中】実証実験とフィードバック収集フェーズ",
+      "title": "【計画中】高度なAIアーキテクチャと実証実験フェーズ",
       "status": "計画中",
-      "objective": "完成したプロトタイプを実際の事業所訪問で利用してもらい、その効果を測定し、改善のためのフィードバックを収集する。",
+      "objective": "「会話変遷記録JSON」「累積リスクJSON」の開発と、「記憶を持つAI」のプロトタイピングを開始し、完成したプロトタイプを用いて実際の職員による実証実験とフィードバック収集を行う。",
       "keyActivities": [
-        "数名の職員による実地テスト（βテスト）の実施",
-        "AIの分析精度、アプリの操作性、業務効率化への貢献度に関するヒアリング",
-        "収集したフィードバックを基にした、改善点・追加機能のリストアップ"
+        "「会話変遷記録JSON」の開発",
+        "「累積リスクJSON」の開発",
+        "Vertex AI (Agent Builder / Gemini API) を活用した「記憶を持つAI」のプロトタイピング",
+        "完成したプロトタイプを用いた実証実験とフィードバック収集"
       ],
       "deliverables": [
-        "実証実験レポート",
-        "改善要望リスト"
+        "「会話変遷記録JSON」の実装",
+        "「累積リスクJSON」の実装",
+        "「記憶を持つAI」のプロトタイプ",
+        "実証実験レポートと改善要望リスト"
       ],
-      "effectAndOutcome": "システムの有効性が実務レベルで証明され、より現場で役立つツールへと進化させるための具体的な指針が得られる。"
+      "effectAndOutcome": "AIの分析精度と対話支援能力が飛躍的に向上し、現場での実用性が検証される。"
     }
   ],
   "lastModified": "2025-10-12T03:00:00.000Z"
